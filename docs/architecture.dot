@@ -1,0 +1,80 @@
+digraph SystemArchitecture {
+    rankdir=TB;
+    fontname="Helvetica";
+    node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled"];
+    edge [fontname="Helvetica", fontsize=10];
+    splines=polyline;
+    nodesep=0.35;
+    ranksep=0.55;
+
+    subgraph cluster_data {
+        label="DATA LAYER  (src/data.py)";
+        style=filled; color="#cfe2f3"; fillcolor="#eaf2fb"; fontsize=13;
+        ciciot [label="CICIoT2023 (real)\n8-class grouped\n39 flow features", fillcolor="#ffffff"];
+        edgeiiot [label="Edge-IIoTset\n(leakage-fixed split\nrequired)", fillcolor="#ffffff"];
+        synth [label="Synthetic generator\n(pipeline dev/test only,\nnot for results)", fillcolor="#ffffff"];
+        dataset [label="Dataset\n(X_train, X_test, y_train, y_test,\nfeature_names, class_names)", fillcolor="#d9ead3"];
+        ciciot -> dataset; edgeiiot -> dataset; synth -> dataset;
+    }
+
+    subgraph cluster_model {
+        label="MODEL LAYER  (src/models.py)";
+        style=filled; color="#fce5cd"; fillcolor="#fef4e8"; fontsize=13;
+        lgbm [label="LightGBM\n150 trees, edge-scale", fillcolor="#ffffff"];
+        mlp [label="CompactMLP (torch, CPU)\n~4-5k params -- edge-deployable", fillcolor="#ffffff"];
+    }
+    dataset -> lgbm;
+    dataset -> mlp;
+
+    subgraph cluster_xai {
+        label="EXPLAINABILITY LAYER  (src/explainers.py)";
+        style=filled; color="#d9d2e9"; fillcolor="#f1edf9"; fontsize=13;
+        treeshap [label="TreeSHAP\n(exact, LightGBM only)", fillcolor="#ffffff"];
+        kernelshap [label="KernelSHAP\n(model-agnostic baseline)", fillcolor="#ffffff"];
+        lwkernelshap [label="Lightweight-KernelSHAP\n(small bg + coalition cap)", fillcolor="#ffffff"];
+        lime [label="LIME", fillcolor="#ffffff"];
+        ccshap [label="CC-SHAP  *** NOVEL ***\ncausal-consolidated,\npost-processes base attrib.", fillcolor="#fff2cc", peripheries=2];
+        causalgraph [label="src/causal_graph.py\nbounded PC-skeleton (cond.<=1)\nlearned ONCE offline from X_train\n-> feature cliques", shape=note, fillcolor="#fff2cc"];
+        causalgraph -> ccshap [style=dashed, label="adjacency"];
+    }
+    lgbm -> treeshap;
+    lgbm -> kernelshap; mlp -> kernelshap;
+    lgbm -> lwkernelshap; mlp -> lwkernelshap;
+    lgbm -> lime; mlp -> lime;
+    lgbm -> ccshap [label="base=TreeSHAP"];
+    mlp -> ccshap [label="base=KernelSHAP"];
+
+    subgraph cluster_resource {
+        label="RESOURCE-CAP SIMULATION  (src/resource_harness.py)";
+        style=filled; color="#cce5cc"; fillcolor="#eaf6ea"; fontsize=13;
+        tiers [label="Each (explainer, model, tier) cell runs in an\nISOLATED SPAWNED SUBPROCESS", shape=box, fillcolor="#ffffff"];
+        pi4 [label="tier_pi4\n4 cores / 1.5GB", fillcolor="#ffffff"];
+        jetson [label="tier_jetson_nano\n4 cores / 2.5GB", fillcolor="#ffffff"];
+        unconstrained [label="tier_unconstrained\nall cores / 8GB (baseline)", fillcolor="#ffffff"];
+        capnote [label="CPU-affinity cap + soft RLIMIT_AS memory cap\n+ bounded timeout\n(OOM / allocator retry-storm -> recorded, never hangs)", shape=note, fillcolor="#eaf6ea"];
+        tiers -> pi4; tiers -> jetson; tiers -> unconstrained;
+        pi4 -> capnote; jetson -> capnote; unconstrained -> capnote;
+    }
+    treeshap -> tiers; kernelshap -> tiers; lwkernelshap -> tiers; lime -> tiers; ccshap -> tiers;
+
+    subgraph cluster_adv {
+        label="ADVERSARIAL LAYER  (src/adversarial.py)";
+        style=filled; color="#f4cccc"; fillcolor="#fdeeee"; fontsize=13;
+        mlpattack [label="MLP (differentiable)\nFGSM (fast, 1-step)\nDeepFool (true multiclass,\niterative, eps-clipped)", fillcolor="#ffffff"];
+        lgbattack [label="LightGBM (non-differentiable)\nboundary_perturb\n(black-box, greedy,\nfinite-difference sensitivity)", fillcolor="#ffffff"];
+    }
+    capnote -> mlpattack [style=dashed];
+    capnote -> lgbattack [style=dashed];
+
+    subgraph cluster_metrics {
+        label="METRICS LAYER  (src/metrics.py)";
+        style=filled; color="#d0e0e3"; fillcolor="#eaf4f5"; fontsize=13;
+        rawmetrics [label="Fidelity | CCS (speed) | MFR (memory)\nTemporal-Coherence | Sparsity | Robustness (ROB)", fillcolor="#ffffff"];
+        umcef [label="UMCEF_IoT =\n0.4*FID + 0.3*EFF + 0.2*ROB + 0.1*SPAR\n(Eq. 58)", fillcolor="#d9ead3"];
+        rawmetrics -> umcef;
+    }
+    mlpattack -> rawmetrics; lgbattack -> rawmetrics;
+
+    output [label="OUTPUT\nresults/metrics/{grid,robustness,umcef}_<source>_<ts>.csv\n+ console summary tables + UMCEF leaderboard", shape=box3d, fillcolor="#fff2cc"];
+    umcef -> output;
+}

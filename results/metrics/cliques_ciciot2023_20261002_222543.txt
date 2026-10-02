@@ -1,0 +1,4 @@
+causal skeleton (alpha=0.05, order<=1) clique sizes (descending): [39]
+n_cliques=1, n_singletons=0, largest=39, n_features=39
+effect-size (|r|>=0.3) clique sizes (descending): [18, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+n_cliques=15, n_singletons=10, largest=18, n_features=39

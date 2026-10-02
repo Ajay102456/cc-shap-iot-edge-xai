@@ -1,0 +1,18 @@
+# Core
+numpy
+pandas
+scikit-learn
+scipy
+
+# Models
+lightgbm
+torch --index-url https://download.pytorch.org/whl/cpu
+
+# XAI
+shap
+lime
+
+# Viz / logging
+matplotlib
+seaborn
+mlflow

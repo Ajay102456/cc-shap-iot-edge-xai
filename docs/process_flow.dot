@@ -1,0 +1,42 @@
+digraph ExperimentProcess {
+    rankdir=TB;
+    fontname="Helvetica";
+    node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled", fillcolor="#eaf2fb"];
+    edge [fontname="Helvetica", fontsize=10];
+
+    start [label="START\npython -m src.run_experiment --data ciciot2023 [flags]", shape=oval, fillcolor="#d9ead3"];
+    load [label="Load dataset\ndata.load_ciciot2023()\n-> stratified subsample, 8-class group,\nz-score scale, train/test split"];
+    train [label="[1/4] Train models\nLightGBM.fit(X_train, y_train)\nCompactMLP.fit(...)\n-> print test accuracy for both"];
+    skeleton [label="Build CC-SHAP causal skeleton\n(once, offline)\ncausal_graph.build_pc_skeleton(X_train)\n-> adjacency matrix"];
+
+    start -> load -> train -> skeleton;
+
+    subgraph cluster_grid {
+        label="[2/4] Explainer x Model x Tier grid";
+        style=filled; fillcolor="#f1edf9"; fontsize=12;
+        gridloop [label="for explainer in {TreeSHAP, KernelSHAP,\n  LW-KernelSHAP, LIME, CC-SHAP}:\n  for model in {LightGBM, MLP}:  (skip incompatible)\n    for tier in {pi4, jetson_nano, unconstrained}:"];
+        spawn [label="spawn subprocess under resource cap\n-> explain_dispatch(...) -> attributions\n-> measure latency, peak memory, OOM/timeout", shape=box, fillcolor="#ffffff"];
+        gridmetrics [label="compute fidelity, CCS, MFR, sparsity,\ntemporal-coherence -> append row to grid_df"];
+        gridloop -> spawn -> gridmetrics;
+    }
+    skeleton -> gridloop;
+
+    subgraph cluster_rob {
+        label="[3/4] Adversarial robustness sweep";
+        style=filled; fillcolor="#fdeeee"; fontsize=12;
+        robloop [label="for epsilon in {0.05, 0.15, 0.30}:"];
+        attack [label="X_adv_mlp = DeepFool(MLP, X, y, eps)  [or FGSM]\nX_adv_lgb = boundary_perturb(LightGBM, X, y, eps)", fillcolor="#ffffff"];
+        explainboth [label="for explainer in {all 5}: for model in {compatible}:\n  attr_clean = explain(X)   attr_adv = explain(X_adv)\n  robustness = top-k feature-overlap(clean, adv)\n  -> append row to robustness_df", fillcolor="#ffffff"];
+        robloop -> attack -> explainboth;
+    }
+    gridmetrics -> robloop;
+
+    umcefstep [label="[4/4] UMCEF_IoT composite\njoin grid_df (FID, EFF, SPAR) + robustness_df (ROB)\nper explainer -> UMCEF_IoT = 0.4FID+0.3EFF+0.2ROB+0.1SPAR\n-> sort into leaderboard", fillcolor="#d9ead3"];
+    explainboth -> umcefstep;
+
+    save [label="Save + report\nresults/metrics/grid_*.csv\nresults/metrics/robustness_*.csv\nresults/metrics/umcef_*.csv\nconsole: summary table + robustness table + leaderboard"];
+    umcefstep -> save;
+
+    endnode [label="END", shape=oval, fillcolor="#d9ead3"];
+    save -> endnode;
+}
