@@ -1,0 +1,71 @@
+%=================================================================
+\documentclass[sensors,article,submit,moreauthors]{Definitions/mdpi}
+\usepackage{longtable}
+
+\firstpage{1}
+\makeatletter
+\setcounter{page}{\@firstpage}
+\makeatother
+\pubvolume{1}
+\issuenum{1}
+\articlenumber{0}
+\pubyear{2026}
+\copyrightyear{2026}
+\datereceived{ }
+\daterevised{ }
+\dateaccepted{ }
+\datepublished{ }
+
+%=================================================================
+\newcommand{\orcidauthorB}{0000-0002-0049-4747}
+\newcommand{\orcidauthorC}{0000-0002-5151-2300}
+
+\Title{Causal-Consolidated SHAP: A Lightweight, Robustness-Oriented Explainer for Resource-Constrained IoT Edge Intrusion Detection}
+
+\Author{Subarmaniam Kannan $^{1,2,}$*\orcidB{} and Sumendra Yogarayan $^{1,2}$\orcidC{}}
+
+\AuthorNames{Subarmaniam Kannan and Sumendra Yogarayan}
+
+\address{%
+$^{1}$ \quad Faculty of Information Science and Technology (FIST), Multimedia University, Jalan Ayer Keroh Lama, Bukit Beruang, Melaka, 75450, Malaysia\\
+$^{2}$ \quad Centre of Intelligent Cloud Computing (CICC), Multimedia University, Jalan Ayer Keroh Lama, Bukit Beruang, 75450 Melaka, Malaysia}
+
+\corres{Correspondence: subar.kannan@mmu.edu.my}
+
+\abstract{Explainable AI (XAI) for Internet of Things (IoT) edge intrusion detection has largely been evaluated on a single axis (model accuracy, or at best explanation fidelity) while largely ignoring whether explanations remain affordable, stable, and faithful under the resource and adversarial constraints of real edge deployment. We address this gap in two stages. First, we build a reproducible benchmark that jointly measures fidelity, computational cost, memory footprint, temporal coherence, and adversarial robustness for four widely used post-hoc explainers (TreeSHAP, KernelSHAP, a lightweight KernelSHAP variant, and LIME) across two models (LightGBM, a compact multilayer perceptron) under three simulated edge resource tiers (Raspberry Pi 4-, Jetson Nano-, and unconstrained-class budgets), operationalizing metrics (the Computational Complexity Score, Memory Footprint Ratio, and the Unified Multi-Criteria Evaluation Framework for IoT, UMCEF\_IoT) that a recent survey formalized by equation but never computed on real data. Second, responding to the field's explicit call for causal and graph-based explainers tailored to network telemetry rather than imported tabular methods, we propose CC-SHAP (Causal-Consolidated SHAP): a lightweight post-processing layer that learns a bounded causal skeleton offline, once, and uses it to consolidate attribution mass onto the strongest signal within each causally entangled feature cluster. Evaluated at production scale on real CICIoT2023 traffic (balanced 8-class, 10,000 samples/class) and replicated on a structurally different dataset, Edge-IIoTset (15-class, 42-feature, duplicate-leakage-corrected), CC-SHAP is the most adversarially robust explainer of all five tested at every perturbation strength on both datasets, and by far the sparsest, while ranking a close second (CICIoT2023, UMCEF\_IoT = 0.708 vs. the leader's 0.713) and first (Edge-IIoTset, UMCEF\_IoT = 0.769) on the composite score. A dedicated ablation further tests whether this advantage requires causal structure specifically, finding a nuanced picture: correlation-informed feature grouping reliably outperforms a size-matched random grouping on sparsity, but its robustness benefit is model-dependent, helping the tree-ensemble base explainer and hurting the neural-network base explainer relative to random grouping. We report every trade-off transparently, including two data-quality issues discovered and corrected during the production runs, and release the full pipeline as an open-source, zero-budget benchmark.}
+
+\keyword{explainable artificial intelligence; Internet of Things; edge computing; intrusion detection; SHAP; causal inference; adversarial robustness; resource-constrained deployment; CICIoT2023; Edge-IIoTset}
+
+\begin{document}
+
+\input{manuscript_body.tex}
+
+%=================================================================
+\authorcontributions{Conceptualization, S.K.; methodology, S.K. and S.Y.; software, S.K. and S.Y.; validation, S.K. and S.Y.; formal analysis, S.K. and S.Y.; investigation, S.K. and S.Y.; data curation, S.K. and S.Y.; writing---original draft preparation, S.K. and S.Y.; writing---review and editing, S.K. and S.Y.; visualization, S.K. and S.Y.; supervision, S.K. and S.Y. Both authors contributed equally to this work. All authors have read and agreed to the published version of the manuscript.}
+
+\funding{This research received no external funding.}
+
+\institutionalreview{Not applicable. This study uses only publicly available, previously collected, de-identified network traffic datasets and does not involve human subjects, personal data collection, or animal research.}
+
+\informedconsent{Not applicable.}
+
+\dataavailability{The datasets analyzed in this study are third-party, publicly available corpora: CICIoT2023 is available from the Canadian Institute for Cybersecurity at the University of New Brunswick (\url{https://www.unb.ca/cic/datasets/iotdataset-2023.html}); Edge-IIoTset is available from its original publication \citep{ref10}. All experiment code, the data-loading and leakage-correction pipeline, trained-model configurations, and the full result CSVs and figures reported in this paper are released at \url{https://github.com/Ajay102456/cc-shap-iot-edge-xai}.}
+
+\acknowledgments{Large language model-based tools (Claude, Anthropic) were used to assist with code implementation and execution of the experimental simulations (model training, explainer benchmarking, and the adversarial and ablation test harnesses) under the authors' direction. The research design, interpretation of results, and manuscript writing are the authors' own. Both authors independently verified all reported figures, tables, and numerical claims against the underlying code and result files (\texttt{results/metrics/}) prior to submission. The authors take full responsibility for the content, accuracy, and integrity of this work.}
+
+\conflictsofinterest{The authors declare no conflicts of interest.}
+
+%=================================================================
+\appendixtitles{yes}
+\appendixstart
+\appendix
+\section[\appendixname~\thesection]{Hyperparameters and Implementation Details}
+\input{manuscript_appendix.tex}
+
+%=================================================================
+\begin{adjustwidth}{-\extralength}{0cm}
+\reftitle{References}
+\input{manuscript_bib.tex}
+\end{adjustwidth}
+
+\end{document}

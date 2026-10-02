@@ -6,3 +6,4 @@ data/raw/
 data/processed/
 results/logs/
 *.DS_Store
+*-eps-converted-to.pdf
